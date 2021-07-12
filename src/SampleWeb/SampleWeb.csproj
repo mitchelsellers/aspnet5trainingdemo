@@ -19,4 +19,8 @@
     <PackageReference Include="SeriLog.Sinks.File" Version="5.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SampleWeb.Data\SampleWeb.Data.csproj" />
+  </ItemGroup>
+
 </Project>
