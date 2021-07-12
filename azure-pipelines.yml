@@ -1,0 +1,34 @@
+trigger:
+  branches:
+    include:
+      - develop
+      - main
+
+variables:
+  Version.Major: '1'
+  Version.Minor: '1'
+  Version.CounterKey: 1.1
+  Version.Revision: $[counter(variables['Version.CounterKey'], 0)]
+  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
+#Force a clean formatted name
+name: $(Version.Major).$(Version.Minor).$(Version.Revision)
+
+jobs: 
+- template: build/aspnetcore.yml
+  parameters:
+    PublishTarget: 'win-x64'
+    EFContextProjectDirectory: 'src/SampleWeb.Data'
+    EFStartupProjectDirectory: 'src/SampleWeb.Web'
+    NetCoreVersion: 5.0.7
+    EfCoreVersion: 5.0.7
+    InstallNetCoreTools: True
+    InstallEfCoreTools: True
+    ScriptEntityFramework: True    
+    PatchEfScripts: False
+    RunSonarCloud: False
+    SonarCloudOrganization: ''
+    SonarCloudProjectKey: ''
+    SonarCloudProjectName: ''
+    SonarCloudExtraProperties: 'sonar.exclusions=**/js/*.*,**/css/*.*,**/fonts/*.*, **/lib/**/*.*, **/jqueryUI/*.*, **/Migrations/*.*, **/daterangepicker.*, **/tag-it.js, **/emails/*.*'
+    

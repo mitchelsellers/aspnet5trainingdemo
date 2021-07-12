@@ -1,0 +1,107 @@
+#Define required parameters
+parameters:
+  PublishTarget: 'win-x64'
+  BuildConfiguration: 'Release'
+  NetCoreVersion: 5.0.7
+  EfCoreVersion: 5.0.7
+  InstallNetCoreTools: false
+  InstallEfCoreTools: false
+  BuildProjectsPattern: '**/*.csproj'
+  TestProjectsPattern: '**/*tests.csproj'
+  RunUnitTests: True
+  ScriptEntityFramework: False
+  PatchEfScripts: True
+  EFContextProjectDirectory: ''
+  EFStartupProjectDirectory: ''
+  RunSonarCloud: False
+  SonarCloudOrganization: ''
+  SonarCloudProjectKey: ''
+  SonarCloudProjectName: ''
+  SonarCloudExtraProperties: ''
+
+#Validate all parameters
+
+jobs:
+- job: BuildAspnetCore
+  displayName: Build ASP.NET Core App
+
+  pool:
+    vmImage: 'windows-2019'
+    demands: vstest
+
+  steps:
+  - task: iowacomputergurus.dotnetcore-pipeline-tasks.set-dot-net-core-assembly-version.set-dotnetcore-assembly-version@2
+    displayName: 'Set .NET Core Assembly Version'
+
+  - task: UseDotNet@2
+    displayName: 'Use .Net Core sdk  ${{ parameters.NetCoreVersion }}'
+    inputs:
+      version: ${{ parameters.NetCoreVersion }}
+    condition: and(succeeded(), eq('${{ parameters.InstallNetCoreTools }}', 'True'))
+
+  - script: 'dotnet tool install --global dotnet-ef --version ${{ parameters.EfCoreVersion }}'
+    displayName: 'Install EFCore Tools  ${{ parameters.EfCoreVersion }}'
+    condition: and(succeeded(), eq('${{ parameters.InstallEfCoreTools }}', 'True'))
+
+  - task: SonarSource.sonarcloud.14d9cde6-c1da-4d55-aa01-2965cd301255.SonarCloudPrepare@1
+    displayName: 'Prepare analysis on SonarCloud'
+    inputs:
+      SonarCloud: 'SonarCloud (ICG)'
+      organization: '${{ parameters.SonarCloudOrganization }}'
+      projectKey: '${{ parameters.SonarCloudProjectKey }}'
+      projectName: '${{ parameters.SonarCloudProjectName }}'
+      projectVersion: '$(Build.BuildNumber)'
+      extraProperties: '${{ parameters.SonarCloudExtraProperties }}'
+    condition: and(succeeded(), eq('${{ parameters.RunSonarCloud }}', 'True'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+  - task: DotNetCoreCLI@2
+    displayName: Build
+    inputs:
+      projects: '**/*.sln'
+      arguments: '--configuration ${{ parameters.BuildConfiguration }}'
+
+  - task: DotNetCoreCLI@2
+    displayName: Test
+    inputs:
+      command: test
+      projects: '${{ parameters.TestProjectsPattern }}'
+      arguments: '--configuration ${{ parameters.BuildConfiguration }} --no-build --collect "Code coverage"'
+    condition: and(succeeded(), eq('${{ parameters.RunUnitTests }}', 'True'))
+
+  - task: SonarSource.sonarcloud.ce096e50-6155-4de8-8800-4221aaeed4a1.SonarCloudAnalyze@1
+    displayName: 'Run Code Analysis'
+    condition: and(succeeded(), eq('${{ parameters.RunSonarCloud }}', 'True'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+  - task: DotNetCoreCLI@2
+    displayName: Publish
+    inputs:
+      command: publish
+      publishWebProjects: True
+      arguments: '-r ${{ parameters.PublishTarget }} --configuration ${{ parameters.BuildConfiguration }} --output $(build.artifactstagingdirectory)/App'
+      zipAfterPublish: True
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+
+
+  - task: iowacomputergurus.dotnetcore-pipeline-tasks.azure-devops-efcore-script-task.azure-devops-efcore-script-task@2
+    displayName: 'Script EFCore Migrations - ${{ parameters.PatchEfScripts }}'
+    inputs:
+      contextProjectDirectory: ${{ parameters.EFContextProjectDirectory }}
+      startupProjectDirectory: ${{ parameters.EFStartupProjectDirectory }}
+      patchForIdempotentIndexBug: ${{ parameters.PatchEfScripts }}
+    condition: and(succeeded(), eq('${{ parameters.ScriptEntityFramework }}', 'True'), ne(variables['Build.Reason'], 'PullRequest'))
+
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifact'
+    inputs:
+      PathtoPublish: '$(build.artifactstagingdirectory)/App'
+      ArtifactName: PublishedApp
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifact: Migrations'
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)/Migrations'
+      ArtifactName: MigrationScript
+    condition: and(succeeded(), eq('${{ parameters.ScriptEntityFramework }}', 'True'), ne(variables['Build.Reason'], 'PullRequest'))
