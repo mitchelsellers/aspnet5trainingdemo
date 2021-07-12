@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 using SampleWeb.Services.Samples;
 using SampleWeb.Services.Samples.Models;
 
@@ -31,6 +32,13 @@ namespace SampleWeb.Controllers
                 return RedirectToAction("Index", "Home");
 
             ModelState.AddModelError("", "Unknown error");
+            return View(data);
+        }
+
+        [HttpGet]
+        public IActionResult ListClasses()
+        {
+            var data = _sampleDataService.ListTrainingEvents().Take(20);
             return View(data);
         }
     }

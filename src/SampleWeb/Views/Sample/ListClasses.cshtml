@@ -1,0 +1,59 @@
+﻿@model IEnumerable<SampleWeb.Services.Samples.Models.TrainingEventListModel>
+
+@{
+    ViewData["Title"] = "ListClasses";
+}
+
+<h1>List Classes</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.TrainingEventId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EventName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EventDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EventLocation)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ClassCount)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.TrainingEventId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EventName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EventDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EventLocation)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ClassCount)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
