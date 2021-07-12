@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace SampleWeb
 {
@@ -54,6 +55,7 @@ namespace SampleWeb
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
+            app.UseSerilogRequestLogging(); //Added here to not capture static request items
             app.UseRouting();
 
             app.UseAuthentication();
