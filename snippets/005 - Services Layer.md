@@ -149,6 +149,63 @@ namespace SampleWeb.Controllers
 }
 ```
 
+## Add SampleControllerTests.cs to the Unit Test Project
+
+```
+using Microsoft.AspNetCore.Mvc;
+using Moq;
+using SampleWeb.Controllers;
+using SampleWeb.Services.Samples;
+using SampleWeb.Services.Samples.Models;
+using Xunit;
+
+namespace SampleWeb.Tests.Controllers
+{
+    public class SampleControllerTests
+    {
+        private readonly Mock<ISampleDataService> _sampleMockDataService;
+
+        public SampleControllerTests()
+        {
+            _sampleMockDataService = new Mock<ISampleDataService>();
+        }
+
+        [Fact]
+        public void TestFormGet_ShouldCallService_ReturnViewResultWithModel()
+        {
+            //Arrange
+            var expectedModel = new FormWithFileViewModel();
+            _sampleMockDataService.Setup(s => s.GetFormWithFileViewModel()).Returns(expectedModel).Verifiable();
+            var controller = new SampleController(_sampleMockDataService.Object);
+            
+            //Act
+            var actualResult = controller.TestForm();
+
+            //Assert
+            _sampleMockDataService.Verify();
+            var actualViewResult = Assert.IsType<ViewResult>(actualResult);
+            Assert.Equal(expectedModel, actualViewResult.Model);
+        }
+
+        [Fact]
+        public void TestFormPost_ShouldNotCallService_ReturningViewResultWithPostedModel_WhenModelErrorsExist()
+        {
+            //Arrange
+            var controller = new SampleController(_sampleMockDataService.Object);
+            controller.ModelState.AddModelError("FirstName", "Message");
+            var input = new FormWithFileViewModel {FirstName = "Test", LastName = "Test"};
+
+            //Act
+            var actualResult = controller.TestForm(input);
+
+            //Assert
+            var actualViewResult = Assert.IsType<ViewResult>(actualResult);
+            Assert.Equal(input, actualViewResult.Model);
+        }
+    }
+}
+```
+
 ## Add the View (Right Click "Add View" -> "Model")
 
 Add this to the `<form>` tag  `method="post" enctype="multipart/form-data"`
@@ -170,6 +227,6 @@ Add menu item for the sample page
 
 ```
 <li class="nav-item">
-    <a class="navlink text-dark" asp-area="" asp-controller="Sample" asp-action="TestForm">Sample Test</a>
+    <a class="nav-link text-dark" asp-area="" asp-controller="Sample" asp-action="TestForm">Sample Test</a>
 </li>
 ```
