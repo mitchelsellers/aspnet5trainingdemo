@@ -27,7 +27,7 @@ Add this to the appsettings.json, replacing existing logging section
       {
         "Name": "File",
         "Args": {
-          "path": "\\Logs\\SampleSite-.log",
+          "path": "Logs\\SampleSite-.log",
           "rollingInterval": "Day"
         }
       }
@@ -44,6 +44,7 @@ This should be set to "Copy if Newer" under the "Copy to Output Directory"
 
 
 ## Replace Program.cs
+```
 using System;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -77,8 +78,6 @@ namespace SampleWeb
             {
                 Log.CloseAndFlush();
             }
-
-            CreateHostBuilder(args).Build().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args)
@@ -89,6 +88,7 @@ namespace SampleWeb
         }
     }
 }
+```
 
 ## Update Startup.cs
 Add the following line of code before the `app.UseRouting();` call
