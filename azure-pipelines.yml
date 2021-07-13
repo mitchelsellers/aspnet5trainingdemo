@@ -19,7 +19,7 @@ jobs:
   parameters:
     PublishTarget: 'win-x64'
     EFContextProjectDirectory: 'src/SampleWeb.Data'
-    EFStartupProjectDirectory: 'src/SampleWeb.Web'
+    EFStartupProjectDirectory: 'src/SampleWeb'
     NetCoreVersion: 5.0.7
     EfCoreVersion: 5.0.7
     InstallNetCoreTools: True
