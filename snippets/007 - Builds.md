@@ -10,7 +10,7 @@
 
 ## Add Build Support Files
 
-### Add aspnetcore.yml 
+### Add build/aspnetcore.yml 
 
 This holds the full build stuff.
 
@@ -19,8 +19,8 @@ This holds the full build stuff.
 parameters:
   PublishTarget: 'win-x64'
   BuildConfiguration: 'Release'
-  NetCoreVersion: 5.0.7
-  EfCoreVersion: 5.0.7
+  NetCoreVersion: 5.0.301
+  EfCoreVersion: 5.0.8
   InstallNetCoreTools: false
   InstallEfCoreTools: false
   BuildProjectsPattern: '**/*.csproj'
@@ -30,11 +30,6 @@ parameters:
   PatchEfScripts: True
   EFContextProjectDirectory: ''
   EFStartupProjectDirectory: ''
-  RunSonarCloud: False
-  SonarCloudOrganization: ''
-  SonarCloudProjectKey: ''
-  SonarCloudProjectName: ''
-  SonarCloudExtraProperties: ''
 
 #Validate all parameters
 
@@ -60,17 +55,6 @@ jobs:
     displayName: 'Install EFCore Tools  ${{ parameters.EfCoreVersion }}'
     condition: and(succeeded(), eq('${{ parameters.InstallEfCoreTools }}', 'True'))
 
-  - task: SonarSource.sonarcloud.14d9cde6-c1da-4d55-aa01-2965cd301255.SonarCloudPrepare@1
-    displayName: 'Prepare analysis on SonarCloud'
-    inputs:
-      SonarCloud: 'SonarCloud (ICG)'
-      organization: '${{ parameters.SonarCloudOrganization }}'
-      projectKey: '${{ parameters.SonarCloudProjectKey }}'
-      projectName: '${{ parameters.SonarCloudProjectName }}'
-      projectVersion: '$(Build.BuildNumber)'
-      extraProperties: '${{ parameters.SonarCloudExtraProperties }}'
-    condition: and(succeeded(), eq('${{ parameters.RunSonarCloud }}', 'True'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-
   - task: DotNetCoreCLI@2
     displayName: Build
     inputs:
@@ -84,10 +68,6 @@ jobs:
       projects: '${{ parameters.TestProjectsPattern }}'
       arguments: '--configuration ${{ parameters.BuildConfiguration }} --no-build --collect "Code coverage"'
     condition: and(succeeded(), eq('${{ parameters.RunUnitTests }}', 'True'))
-
-  - task: SonarSource.sonarcloud.ce096e50-6155-4de8-8800-4221aaeed4a1.SonarCloudAnalyze@1
-    displayName: 'Run Code Analysis'
-    condition: and(succeeded(), eq('${{ parameters.RunSonarCloud }}', 'True'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
 
   - task: DotNetCoreCLI@2
     displayName: Publish
@@ -122,11 +102,40 @@ jobs:
       PathtoPublish: '$(Build.ArtifactStagingDirectory)/Migrations'
       ArtifactName: MigrationScript
     condition: and(succeeded(), eq('${{ parameters.ScriptEntityFramework }}', 'True'), ne(variables['Build.Reason'], 'PullRequest'))
-
-
 ```
 
-### Add 
+### Add azure-popelines.yml to project toot
+
+```
+trigger:
+  branches:
+    include:
+      - develop
+      - main
+
+variables:
+  Version.Major: '1'
+  Version.Minor: '1'
+  Version.CounterKey: 1.1
+  Version.Revision: $[counter(variables['Version.CounterKey'], 0)]
+  SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
+#Force a clean formatted name
+name: $(Version.Major).$(Version.Minor).$(Version.Revision)
+
+jobs: 
+- template: build/aspnetcore.yml
+  parameters:
+    PublishTarget: 'win-x64'
+    EFContextProjectDirectory: 'src/SampleWeb.Data'
+    EFStartupProjectDirectory: 'src/SampleWeb.Web'
+    NetCoreVersion: 5.0.301
+    EfCoreVersion: 5.0.8
+    InstallNetCoreTools: True
+    InstallEfCoreTools: True
+    ScriptEntityFramework: True    
+    PatchEfScripts: False
+```
 
 ***
 
