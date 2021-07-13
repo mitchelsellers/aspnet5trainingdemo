@@ -2,8 +2,8 @@
 parameters:
   PublishTarget: 'win-x64'
   BuildConfiguration: 'Release'
-  NetCoreVersion: 5.0.7
-  EfCoreVersion: 5.0.7
+  NetCoreVersion: 5.0.8
+  EfCoreVersion: 5.0.8
   InstallNetCoreTools: false
   InstallEfCoreTools: false
   BuildProjectsPattern: '**/*.csproj'
